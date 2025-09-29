@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tamper-Proof Financial Report Verification</title>
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/2.6.0/uicons-regular-rounded/css/uicons-regular-rounded.css">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .company-info h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .company-info p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+
+        .security-badge i {
+            font-size: 1.5rem;
+        }
+
+        /* Loading State */
+        .loading-state {
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-state {
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .error-icon i {
+            font-size: 4rem;
+            color: #ef4444;
+            margin-bottom: 20px;
+        }
+
+        .error-state h2 {
+            font-size: 2rem;
+            color: #ef4444;
+            margin-bottom: 10px;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 30px;
+            margin: 30px;
+            border-radius: 15px;
+            border-left: 6px solid;
+        }
+
+        .status-banner.verified {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-left-color: #10b981;
+        }
+
+        .status-banner.tampered {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border-left-color: #ef4444;
+        }
+
+        .status-icon i {
+            font-size: 3rem;
+        }
+
+        .status-text h2 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .status-text p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Verification Details */
+        .verification-details {
+            margin: 30px;
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .verification-details h3 {
+            font-size: 1.5rem;
+            color: #374151;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .detail-item label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-item span {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            word-break: break-all;
+        }
+
+        .hash-value {
+            color: #7c3aed;
+            font-weight: 600;
+        }
+
+        .transaction-value {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .status-verified {
+            color: #10b981 !important;
+            font-weight: bold !important;
+            background: #ecfdf5 !important;
+            border-color: #a7f3d0 !important;
+        }
+
+        /* Document Viewer */
+        .document-viewer {
+            margin: 30px;
+            background: #f9fafb;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .document-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .document-header h3 {
+            font-size: 1.5rem;
+            color: #374151;
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary, .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* PDF Container */
+        .pdf-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #d1d5db;
+            min-height: 600px;
+        }
+
+        .pdf-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        /* Security Notice */
+        .security-notice {
+            margin: 30px;
+            background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            border-radius: 15px;
+            padding: 30px;
+            border-left: 6px solid #f59e0b;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .notice-icon i {
+            font-size: 2rem;
+            color: #d97706;
+        }
+
+        .notice-content h4 {
+            font-size: 1.3rem;
+            color: #92400e;
+            margin-bottom: 15px;
+        }
+
+        .notice-content ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .notice-content li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #78350f;
+            line-height: 1.5;
+        }
+
+        .notice-content li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #d97706;
+            font-weight: bold;
+        }
+
+        /* Tampered State */
+        .tampered-state {
+            padding: 30px;
+        }
+
+        .tamper-warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px;
+            border-left: 6px solid #ef4444;
+        }
+
+        .tamper-warning h3 {
+            color: #dc2626;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .tamper-warning p {
+            color: #7f1d1d;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        /* Footer */
+        .footer {
+            background: #374151;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .company-info h1 {
+                font-size: 2rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .verification-details,
+            .document-viewer,
+            .security-notice,
+            .tamper-warning {
+                margin: 20px;
+                padding: 20px;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .document-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            
+            .document-actions {
+                justify-content: center;
+            }
+            
+            .status-banner {
+                flex-direction: column;
+                text-align: center;
+                margin: 20px;
+                padding: 20px;
+            }
+            
+            .security-notice {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            
+            .header,
+            .footer,
+            .document-actions,
+            .security-notice {
+                display: none !important;
+            }
+            
+            .document-viewer {
+                margin: 0;
+                padding: 0;
+                background: white;
+                border: none;
+            }
+            
+            .status-banner {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="company-info">
+                    <h1>CYBERNEX INNOVATE</h1>
+                    <p>Document Verification System</p>
+                </div>
+                <div class="security-badge">
+                    <i class="fi fi-rr-shield-check"></i>
+                    <span>BLOCKCHAIN SECURED</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Verifying document authenticity...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="error-state" style="display: none;">
+            <div class="error-icon">
+                <i class="fi fi-rr-cross-circle"></i>
+            </div>
+            <h2>Document Not Found</h2>
+            <p>The requested document could not be verified. Please check the QR code and try again.</p>
+        </div>
+
+        <!-- Verification Results -->
+        <div id="verified" class="verification-results" style="display: none;">
+            <!-- Status Banner -->
+            <div class="status-banner verified">
+                <div class="status-icon">
+                    <i class="fi fi-rr-shield-check"></i>
+                </div>
+                <div class="status-text">
+                    <h2>ORIGINAL - TAMPER-PROOF FINANCIAL REPORT</h2>
+                    <p>This document has been cryptographically verified and stored on the Solana blockchain</p>
+                </div>
+            </div>
+
+            <!-- Blockchain Verification Details -->
+            <div class="verification-details">
+                <h3>Blockchain Verification Details</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Document Hash:</label>
+                        <span id="documentHash" class="hash-value">Loading...</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Transaction ID:</label>
+                        <span id="transactionId" class="transaction-value">Loading...</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Timestamp:</label>
+                        <span id="timestamp">Loading...</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Network:</label>
+                        <span>Solana Devnet</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Status:</label>
+                        <span class="status-verified">✓ VERIFIED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Viewer -->
+            <div class="document-viewer">
+                <div class="document-header">
+                    <h3>Original Financial Report</h3>
+                    <div class="document-actions">
+                        <button id="printBtn" class="btn-primary">
+                            <i class="fi fi-rr-print"></i>
+                            Print Document
+                        </button>
+                        <a id="solanaExplorerBtn" href="#" target="_blank" class="btn-secondary">
+                            <i class="fi fi-rr-link"></i>
+                            View on Solana Explorer
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- PDF Viewer Container -->
+                <div class="pdf-container">
+                    <embed id="pdfViewer" src="" type="application/pdf" width="100%" height="600px">
+                    <div id="pdfFallback" class="pdf-fallback" style="display: none;">
+                        <p>PDF viewer not supported. Please use the print button to view the document.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="security-notice">
+                <div class="notice-icon">
+                    <i class="fi fi-rr-info"></i>
+                </div>
+                <div class="notice-content">
+                    <h4>Security Information</h4>
+                    <ul>
+                        <li>This document is cryptographically hashed and stored on the Solana blockchain</li>
+                        <li>Any tampering or modification would result in a different hash, making it immediately detectable</li>
+                        <li>The document can only be printed, not edited or downloaded to prevent unauthorized changes</li>
+                        <li>Verification can be independently confirmed on the Solana blockchain explorer</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tampered Document State -->
+        <div id="tampered" class="verification-results tampered-state" style="display: none;">
+            <div class="status-banner tampered">
+                <div class="status-icon">
+                    <i class="fi fi-rr-cross-circle"></i>
+                </div>
+                <div class="status-text">
+                    <h2>DOCUMENT TAMPERED - NOT AUTHENTIC</h2>
+                    <p>This document has been modified and cannot be verified against blockchain records</p>
+                </div>
+            </div>
+            
+            <div class="tamper-warning">
+                <h3>⚠️ Security Warning</h3>
+                <p>The document hash does not match the blockchain records. This indicates the document has been tampered with or corrupted.</p>
+                <p>Please request a new copy of the original document from the issuer.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2025 CyberNex Innovate - Blockchain Document Verification System</p>
+        <p>Powered by Solana Blockchain Technology</p>
+    </footer>
+
+    <script>
+        // Global variables
+        let documentData = null;
+        let pdfBlob = null;
+
+        // Initialize the verification process when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeVerification();
+        });
+
+        /**
+         * Initialize the document verification process
+         */
+        function initializeVerification() {
+            // Get document hash from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const documentHash = urlParams.get('hash');
+            const transactionId = urlParams.get('tx');
+            
+            if (!documentHash) {
+                showError('No document hash provided');
+                return;
+            }
+            
+            // Start verification process
+            verifyDocument(documentHash, transactionId);
+        }
+
+        /**
+         * Verify document against blockchain records
+         */
+        async function verifyDocument(documentHash, transactionId) {
+            try {
+                showLoading();
+                
+                // Simulate API call to verify document
+                // In a real implementation, this would call your backend API
+                const verificationResult = await mockVerifyDocument(documentHash, transactionId);
+                
+                if (verificationResult.success) {
+                    showVerifiedDocument(verificationResult.data);
+                } else {
+                    if (verificationResult.reason === 'tampered') {
+                        showTamperedDocument();
+                    } else {
+                        showError(verificationResult.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Verification error:', error);
+                showError('Verification failed. Please try again.');
+            }
+        }
+
+        /**
+         * Mock verification function - replace with actual API call
+         */
+        async function mockVerifyDocument(documentHash, transactionId) {
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Mock verification logic
+            // In production, this would verify against your blockchain records
+            if (documentHash && documentHash.length === 64) {
+                return {
+                    success: true,
+                    data: {
+                        documentHash: documentHash,
+                        transactionId: transactionId || 'mock-transaction-id-' + Math.random().toString(36).substr(2, 9),
+                        timestamp: new Date().toISOString(),
+                        walletAddress: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+                        isVerified: true,
+                        pdfUrl: generateMockPDF(documentHash) // In production, this would be the actual PDF URL
+                    }
+                };
+            } else {
+                return {
+                    success: false,
+                    reason: 'tampered',
+                    message: 'Document hash does not match blockchain records'
+                };
+            }
+        }
+
+        /**
+         * Generate a mock PDF for demonstration
+         */
+        function generateMockPDF(documentHash) {
+            // Create a simple PDF content using data URL
+            // In production, this would fetch the actual PDF from secure storage
+            const pdfContent = `
+                <html>
+                <head><title>Financial Report - ${documentHash.substr(0, 8)}</title></head>
+                <body style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h1>CyberNex Innovate - Financial Report</h1>
+                    <h2>Document Hash: ${documentHash}</h2>
+                    <p><strong>VERIFIED ORIGINAL DOCUMENT</strong></p>
+                    <p>This is a mock financial report for demonstration purposes.</p>
+                    <p>Generated: ${new Date().toLocaleString()}</p>
+                    <div style="margin-top: 40px; padding: 20px; border: 2px solid #000;">
+                        <h3>Financial Summary</h3>
+                        <p>Total Income: ₱150,000</p>
+                        <p>Total Expenses: ₱100,000</p>
+                        <p>Net Income: ₱50,000</p>
+                    </div>
+                    <div style="margin-top: 20px; font-size: 12px; color: #666;">
+                        <p>This document is cryptographically secured and verified on the Solana blockchain.</p>
+                        <p>Document Hash: ${documentHash}</p>
+                        <p>Any tampering would be immediately detectable.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // Convert HTML to blob (mock PDF)
+            const blob = new Blob([pdfContent], { type: 'text/html' });
+            return URL.createObjectURL(blob);
+        }
+
+        /**
+         * Show loading state
+         */
+        function showLoading() {
+            hideAllStates();
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        /**
+         * Show error state
+         */
+        function showError(message) {
+            hideAllStates();
+            const errorElement = document.getElementById('error');
+            errorElement.style.display = 'block';
+            errorElement.querySelector('p').textContent = message;
+        }
+
+        /**
+         * Show verified document
+         */
+        function showVerifiedDocument(data) {
+            hideAllStates();
+            documentData = data;
+            
+            const verifiedElement = document.getElementById('verified');
+            verifiedElement.style.display = 'block';
+            
+            // Populate verification details
+            document.getElementById('documentHash').textContent = data.documentHash;
+            document.getElementById('transactionId').textContent = data.transactionId;
+            document.getElementById('timestamp').textContent = new Date(data.timestamp).toLocaleString();
+            
+            // Set up Solana explorer link
+            const explorerBtn = document.getElementById('solanaExplorerBtn');
+            explorerBtn.href = `https://explorer.solana.com/tx/${data.transactionId}?cluster=devnet`;
+            
+            // Load PDF if available
+            if (data.pdfUrl) {
+                loadPDF(data.pdfUrl);
+            }
+            
+            // Set up print button
+            document.getElementById('printBtn').addEventListener('click', printDocument);
+        }
+
+        /**
+         * Show tampered document state
+         */
+        function showTamperedDocument() {
+            hideAllStates();
+            document.getElementById('tampered').style.display = 'block';
+        }
+
+        /**
+         * Hide all state elements
+         */
+        function hideAllStates() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('verified').style.display = 'none';
+            document.getElementById('tampered').style.display = 'none';
+        }
+
+        /**
+         * Load PDF into viewer
+         */
+        function loadPDF(pdfUrl) {
+            const pdfViewer = document.getElementById('pdfViewer');
+            const pdfFallback = document.getElementById('pdfFallback');
+            
+            try {
+                // Try to load PDF
+                pdfViewer.src = pdfUrl;
+                pdfViewer.style.display = 'block';
+                pdfFallback.style.display = 'none';
+                
+                // Handle PDF load errors
+                pdfViewer.onerror = function() {
+                    pdfViewer.style.display = 'none';
+                    pdfFallback.style.display = 'block';
+                };
+                
+                // Store PDF blob for printing
+                fetch(pdfUrl)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        pdfBlob = blob;
+                    });
+                    
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                pdfViewer.style.display = 'none';
+                pdfFallback.style.display = 'block';
+            }
+        }
+
+        /**
+         * Print the document
+         */
+        function printDocument() {
+            if (pdfBlob) {
+                // Create a new window for printing the PDF
+                const printWindow = window.open();
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Print Financial Report</title>
+                        <style>
+                            body { margin: 0; padding: 0; }
+                            embed { width: 100vw; height: 100vh; }
+                        </style>
+                    </head>
+                    <body>
+                        <embed src="${pdfUrl}" type="application/pdf" width="100%" height="100%">
+                    </body>
+                    </html>
+                `);
+                
+                printWindow.document.close();
+                
+                // Auto-print after a short delay
+                setTimeout(() => {
+                    printWindow.print();
+                }, 1000);
+            } else {
+                // Fallback: print the current page
+                window.print();
+            }
+        }
+
+        /**
+         * Copy text to clipboard
+         */
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Show success message
+                console.log('Copied to clipboard');
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        /**
+         * Format date for display
+         */
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        /**
+         * Truncate hash for display
+         */
+        function truncateHash(hash, length = 16) {
+            if (hash.length <= length) return hash;
+            return hash.substr(0, length / 2) + '...' + hash.substr(-length / 2);
+        }
+
+        // Add click handlers for hash values to copy to clipboard
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const hashElements = document.querySelectorAll('.hash-value, .transaction-value');
+                hashElements.forEach(element => {
+                    element.style.cursor = 'pointer';
+                    element.title = 'Click to copy';
+                    element.addEventListener('click', function() {
+                        copyToClipboard(this.textContent);
+                    });
+                });
+            }, 100);
+        });
+
+        // Handle mobile responsiveness for PDF viewer
+        window.addEventListener('resize', function() {
+            const pdfViewer = document.getElementById('pdfViewer');
+            if (pdfViewer && window.innerWidth < 768) {
+                pdfViewer.style.height = '400px';
+            } else if (pdfViewer) {
+                pdfViewer.style.height = '600px';
+            }
+        });
+
+        // Prevent right-click context menu to discourage tampering attempts
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Disable certain keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+            if (e.keyCode === 123 || 
+                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) ||
+                (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

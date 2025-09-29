@@ -1,0 +1,23 @@
+{
+  "name": "cybernex-document-verification",
+  "version": "1.0.0",
+  "description": "Blockchain-based document verification system for CyberNex Innovate financial reports",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "serve": "npx serve .",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "blockchain",
+    "document-verification",
+    "tamper-proof",
+    "solana",
+    "financial-reports"
+  ],
+  "author": "CyberNex Innovate",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}
