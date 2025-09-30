@@ -101,47 +101,12 @@ body {
 }
 
 .error-state h2 {
-    font-size: 2rem;
-    color: #ef4444;
-    margin-bottom: 10px;
+  font-size: 2rem;
+  color: #ef4444;
+  margin-bottom: 10px;
 }
 
-.error-suggestions {
-    margin-top: 30px;
-    padding: 20px;
-    background: #fef2f2;
-    border-radius: 10px;
-    border-left: 4px solid #ef4444;
-    text-align: left;
-}
-
-.error-suggestions h4 {
-    color: #dc2626;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-}
-
-.error-suggestions ul {
-    list-style: none;
-    padding: 0;
-}
-
-.error-suggestions li {
-    padding: 8px 0;
-    padding-left: 25px;
-    position: relative;
-    color: #7f1d1d;
-    line-height: 1.5;
-}
-
-.error-suggestions li::before {
-    content: '•';
-    position: absolute;
-    left: 0;
-    color: #ef4444;
-    font-weight: bold;
-    font-size: 1.2rem;
-}/* Status Banner */
+/* Status Banner */
 .status-banner {
   display: flex;
   align-items: center;

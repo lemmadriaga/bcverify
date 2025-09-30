@@ -3,8 +3,8 @@ let documentData = null;
 let pdfBlob = null;
 
 // Initialize the verification process when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    initializeVerification();
+document.addEventListener("DOMContentLoaded", function () {
+  initializeVerification();
 });
 
 /**
@@ -26,14 +26,13 @@ function initializeVerification() {
 }
 
 /**
- * Verify document against blockchain records
+ * Verify document against stored records
  */
 async function verifyDocument(documentHash, transactionId) {
   try {
     showLoading();
 
-    // Simulate API call to verify document
-    // In a real implementation, this would call your backend API
+    // Verify document by fetching from Firebase Firestore or localStorage
     const verificationResult = await verifyDocumentFromStorage(
       documentHash,
       transactionId
@@ -42,7 +41,7 @@ async function verifyDocument(documentHash, transactionId) {
     if (verificationResult.success) {
       showVerifiedDocument(verificationResult.data);
     } else {
-      if (verificationResult.reason === "tampered") {
+      if (verificationResult.reason === "tampered" || verificationResult.reason === "expired") {
         showTamperedDocument();
       } else {
         showError(verificationResult.message);
@@ -55,92 +54,100 @@ async function verifyDocument(documentHash, transactionId) {
 }
 
 /**
- * Verify document against stored records and retrieve actual PDF
+ * Verify document by fetching from Firebase Firestore
  */
 async function verifyDocumentFromStorage(documentHash, transactionId) {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
   try {
-    // Use the storage API to retrieve document
-    const result = window.CyberNexStorage.getDocument(documentHash);
+    // Check if Firebase service is available
+    if (!window.FirebaseDocumentService || !window.FirebaseDocumentService.isInitialized()) {
+      console.error('Firebase service not available, falling back to localStorage');
+      return verifyFromLocalStorage(documentHash, transactionId);
+    }
+
+    // Fetch document from Firestore
+    const result = await window.FirebaseDocumentService.getDocument(documentHash);
     
     if (result.success) {
-      const documentData = result.data;
-      
+      const data = result.data;
+      return {
+        success: true,
+        data: {
+          documentHash: data.documentHash,
+          transactionId: data.transactionId,
+          timestamp: data.timestamp,
+          walletAddress: data.walletAddress,
+          isVerified: data.isVerified,
+          pdfUrl: data.pdfDataUrl, // This contains the actual PDF data URL
+          metadata: data.metadata
+        },
+      };
+    } else {
+      return {
+        success: false,
+        reason: result.reason || "not_found",
+        message: result.message || "Document not found or has expired",
+      };
+    }
+  } catch (error) {
+    console.error('Error verifying document:', error);
+    
+    // Fallback to localStorage
+    console.log('Falling back to localStorage verification');
+    return verifyFromLocalStorage(documentHash, transactionId);
+  }
+}
+
+/**
+ * Fallback verification using localStorage
+ */
+function verifyFromLocalStorage(documentHash, transactionId) {
+  try {
+    const storedData = localStorage.getItem(`pdf_${documentHash}`);
+    
+    if (storedData) {
+      const parsedData = JSON.parse(storedData);
       return {
         success: true,
         data: {
           documentHash: documentHash,
-          transactionId: documentData.transactionId || transactionId,
-          timestamp: documentData.timestamp,
-          walletAddress: documentData.walletAddress || "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+          transactionId: transactionId || "local-storage-" + Date.now(),
+          timestamp: parsedData.timestamp,
+          walletAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
           isVerified: true,
-          pdfUrl: documentData.pdfDataUrl, // This is the actual PDF stored as data URL
-          metadata: documentData.metadata
+          pdfUrl: parsedData.pdfDataUrl,
+          metadata: parsedData.financialData
         },
       };
     } else {
-      // Handle different failure reasons
-      let message = "Document not found";
-      if (result.reason === 'expired') {
-        message = "Document has expired. Please generate a new report.";
-      } else if (result.reason === 'not_found') {
-        message = "Document not found. Please ensure you're using the same browser where the report was generated.";
-      }
-      
       return {
         success: false,
-        reason: result.reason,
-        message: message
+        reason: "not_found",
+        message: "Document not found in local storage",
       };
     }
   } catch (error) {
-    console.error('Error retrieving document:', error);
+    console.error('Error with localStorage verification:', error);
     return {
       success: false,
       reason: "error",
-      message: "Error retrieving document data"
+      message: "Error accessing stored document",
     };
   }
 }
 
 /**
- * Generate a mock PDF for demonstration
+ * Convert data URL to blob for PDF handling
  */
-function generateMockPDF(documentHash) {
-  // Create a simple PDF content using data URL
-  // In production, this would fetch the actual PDF from secure storage
-  const pdfContent = `
-        <html>
-        <head><title>Financial Report - ${documentHash.substr(
-          0,
-          8
-        )}</title></head>
-        <body style="font-family: Arial, sans-serif; padding: 20px;">
-            <h1>CyberNex Innovate - Financial Report</h1>
-            <h2>Document Hash: ${documentHash}</h2>
-            <p><strong>VERIFIED ORIGINAL DOCUMENT</strong></p>
-            <p>This is a mock financial report for demonstration purposes.</p>
-            <p>Generated: ${new Date().toLocaleString()}</p>
-            <div style="margin-top: 40px; padding: 20px; border: 2px solid #000;">
-                <h3>Financial Summary</h3>
-                <p>Total Income: ₱150,000</p>
-                <p>Total Expenses: ₱100,000</p>
-                <p>Net Income: ₱50,000</p>
-            </div>
-            <div style="margin-top: 20px; font-size: 12px; color: #666;">
-                <p>This document is cryptographically secured and verified on the Solana blockchain.</p>
-                <p>Document Hash: ${documentHash}</p>
-                <p>Any tampering would be immediately detectable.</p>
-            </div>
-        </body>
-        </html>
-    `;
-
-  // Convert HTML to blob (mock PDF)
-  const blob = new Blob([pdfContent], { type: "text/html" });
-  return URL.createObjectURL(blob);
+function dataURLToBlob(dataURL) {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
 }
 
 /**
@@ -149,20 +156,6 @@ function generateMockPDF(documentHash) {
 function showLoading() {
   hideAllStates();
   document.getElementById("loading").style.display = "block";
-}
-
-/**
- * Show error state
- */
-function showError(message, title = 'Document Not Found') {
-  hideAllStates();
-  const errorElement = document.getElementById('error');
-  const titleElement = document.getElementById('errorTitle');
-  const messageElement = document.getElementById('errorMessage');
-  
-  errorElement.style.display = 'block';
-  titleElement.textContent = title;
-  messageElement.textContent = message;
 }
 
 /**
@@ -231,23 +224,42 @@ function loadPDF(pdfUrl) {
   const pdfFallback = document.getElementById("pdfFallback");
 
   try {
-    // Try to load PDF
-    pdfViewer.src = pdfUrl;
-    pdfViewer.style.display = "block";
-    pdfFallback.style.display = "none";
+    // Check if pdfUrl is a data URL (base64 encoded PDF)
+    if (pdfUrl.startsWith('data:application/pdf')) {
+      // Convert data URL to blob for proper PDF handling
+      const blob = dataURLToBlob(pdfUrl);
+      const blobUrl = URL.createObjectURL(blob);
+      
+      pdfViewer.src = blobUrl;
+      pdfViewer.style.display = "block";
+      pdfFallback.style.display = "none";
+      
+      // Store PDF blob for printing
+      pdfBlob = blob;
+    } else {
+      // Handle regular URL
+      pdfViewer.src = pdfUrl;
+      pdfViewer.style.display = "block";
+      pdfFallback.style.display = "none";
+
+      // Store PDF blob for printing
+      fetch(pdfUrl)
+        .then((response) => response.blob())
+        .then((blob) => {
+          pdfBlob = blob;
+        })
+        .catch((error) => {
+          console.warn("Could not fetch PDF for printing:", error);
+        });
+    }
 
     // Handle PDF load errors
     pdfViewer.onerror = function () {
+      console.error("PDF viewer failed to load PDF");
       pdfViewer.style.display = "none";
       pdfFallback.style.display = "block";
     };
 
-    // Store PDF blob for printing
-    fetch(pdfUrl)
-      .then((response) => response.blob())
-      .then((blob) => {
-        pdfBlob = blob;
-      });
   } catch (error) {
     console.error("Error loading PDF:", error);
     pdfViewer.style.display = "none";

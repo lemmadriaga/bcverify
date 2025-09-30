@@ -1,0 +1,62 @@
+// Firestore Security Rules for CyberNex Innovate Document Verification
+// These rules allow public read access to verification documents while restricting write access
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Verification documents collection - used for QR code verification
+    match /verification_documents/{documentId} {
+      // Allow public read access for document verification
+      // This enables QR code scanning to work from any device without authentication
+      allow read: if true;
+      
+      // Only allow authenticated users to write/create verification documents
+      // This prevents unauthorized uploads while allowing the app to store PDFs
+      allow write: if request.auth != null;
+      
+      // Allow deletion only by authenticated users (for cleanup of expired documents)
+      allow delete: if request.auth != null;
+    }
+    
+    // All other collections require authentication
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+/*
+DEPLOYMENT INSTRUCTIONS:
+
+1. Copy the rules above (starting from rules_version = '2';)
+
+2. Go to Firebase Console (https://console.firebase.google.com/)
+
+3. Select your project: cybernex-d2ca7
+
+4. Navigate to: Firestore Database > Rules
+
+5. Replace the existing rules with the rules above
+
+6. Click "Publish" to deploy the rules
+
+7. Test the rules by:
+   - Generating a PDF in your app (should work - authenticated)
+   - Scanning QR code from any device (should work - public read)
+   - Trying to write to verification_documents without auth (should fail)
+
+SECURITY NOTES:
+- verification_documents allows public read for QR code verification
+- All write operations require authentication
+- Documents expire after 30 days (handled by application logic)
+- No sensitive user data should be stored in verification_documents
+- Only PDF data URLs and metadata are stored for verification
+
+TESTING:
+After deploying these rules, test by:
+1. Generate a PDF report in your app
+2. Scan the QR code with any QR scanner app
+3. Verify the document opens and displays correctly
+4. Check that tampering detection works properly
+*/
