@@ -3,21 +3,25 @@
 ## Quick Deploy to Vercel (Recommended)
 
 1. **Install Vercel CLI**:
+
    ```bash
    npm install -g vercel
    ```
 
 2. **Navigate to the verification folder**:
+
    ```bash
    cd blockchain-verification-web
    ```
 
 3. **Deploy**:
+
    ```bash
    vercel --prod
    ```
 
 4. **Follow the prompts**:
+
    - Set up and deploy: Y
    - Which scope: Select your account
    - Link to existing project: N (for first deployment)
@@ -46,12 +50,14 @@
 ## Custom Domain Setup (Optional)
 
 ### For Vercel:
+
 1. Go to your project dashboard
 2. Click "Settings" > "Domains"
 3. Add your custom domain
 4. Update DNS records as instructed
 
 ### Recommended Domain Names:
+
 - `verify.cybernex.com`
 - `documents.cybernex.com`
 - `blockchain-verify.cybernex.com`
@@ -59,6 +65,7 @@
 ## Testing the Deployment
 
 1. **Generate a test URL**:
+
    ```
    https://your-domain.com/?hash=1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef&tx=test123
    ```

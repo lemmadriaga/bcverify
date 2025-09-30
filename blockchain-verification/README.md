@@ -15,12 +15,14 @@ A blockchain-based document verification system that ensures the authenticity an
 ### Free Hosting Options
 
 1. **Vercel (Recommended)**
+
    - Automatic deployments from Git
    - Free SSL certificates
    - Global CDN
    - Custom domains
 
 2. **Netlify**
+
    - Easy drag-and-drop deployment
    - Form handling capabilities
    - Branch deployments
@@ -32,11 +34,13 @@ A blockchain-based document verification system that ensures the authenticity an
 ### Deployment Steps (Vercel)
 
 1. Install Vercel CLI:
+
    ```bash
    npm i -g vercel
    ```
 
 2. Deploy:
+
    ```bash
    vercel --prod
    ```
@@ -66,6 +70,7 @@ A blockchain-based document verification system that ensures the authenticity an
 ## API Integration
 
 The verification page expects URL parameters:
+
 - `hash`: Document SHA-256 hash
 - `tx`: Solana transaction ID (optional)
 
